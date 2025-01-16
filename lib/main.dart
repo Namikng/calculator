@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -6,15 +7,6 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  // TODO: User can see a display showing the current number entered or the result of the last operation.
-  // TODO: User can see an entry pad containing buttons for the digits 0-9, operations - '+', '-', '/', and '=', a 'C' button (for clear), and an 'AC' button (for clear all).
-  // TODO: User can enter numbers as sequences up to 8 digits long by clicking on digits in the entry pad. Entry of any digits more than 8 will be ignored.
-  // TODO: User can click on an operation button to display the result of that operation on: the result of the preceding operation and the last number entered OR the last two numbers entered OR the last number entered
-  // TODO: User can click the 'C' button to clear the last number or the last operation. If the users last entry was an operation the display will be updated to the value that preceded it.
-  // TODO: User can click the 'AC' button to clear all internal work areas and to set the display to 0.
-  // TODO: User can see 'ERR' displayed if any operation would exceed the 8 digit maximum.
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -38,12 +30,58 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String displayText = '0';
+  String displaySecondNumber = '0';
+  bool isFirstNumber = true;
+  int firstNumber = 0;
+  int secondNumber = 0;
+  static const int maxDisplayLength = 8;
+  late String currentOperator;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  var operators = {
+    '+': (num a, num b) => a + b,
+    '-': (num a, num b) => a - b,
+    '×': (num a, num b) => a * b,
+    '÷': (num a, num b) => a / b,
+  };
+
+  void addNumber(int number) {
+    if (displayText.length >= maxDisplayLength) return;
+
+    if (displayText == '0') displayText = '';
+    displayText += number.toString();
+
+    try {
+      if (isFirstNumber) {
+        updateFirstNumber();
+      } else {
+        updateSecondNumber(number);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error parsing number : $e');
+      }
+    }
+
+    print('first : $firstNumber, second : $secondNumber');
+    setState(() {});
+  }
+
+  void updateFirstNumber() {
+    firstNumber = int.parse(displayText);
+  }
+
+  void updateSecondNumber(int number) {
+    displaySecondNumber += number.toString();
+    secondNumber = int.parse(displaySecondNumber);
+  }
+
+  void calculateWithOperator(String operator) {
+    firstNumber = int.parse(displayText);
+    displayText += operator;
+    isFirstNumber = false;
+    currentOperator = operator;
+    setState(() {});
   }
 
   @override
@@ -55,28 +93,176 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Column(
         children: <Widget>[
-          Expanded(
+          Align(
+            alignment: Alignment.centerRight,
             child: Text(
-              '0',
+              displayText,
+              style: TextStyle(
+                fontSize: 40.0,
+              ),
             ),
           ),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
+          Row(
             children: [
-              InputButton(),
-              Container(
-                child: Text('+/-'),
+              DigitButton(
+                  buttonText: 'A/C',
+                  onPressed: () {
+                    setState(() {
+                      displayText = '0';
+                      displaySecondNumber = '0';
+                      isFirstNumber = true;
+                      firstNumber = 0;
+                      secondNumber = 0;
+                    });
+                  }),
+              DigitButton(
+                buttonText: '',
               ),
-              Container(
-                child: Text('%'),
+              DigitButton(
+                buttonText: '',
               ),
-              Container(
-                child: Text('÷'),
+              OperationButton(
+                  operation: '÷',
+                  onPressed: () {
+                    calculateWithOperator('÷');
+                  }),
+            ],
+          ),
+          Row(
+            children: [
+              buildDigitButton(7),
+              buildDigitButton(8),
+              buildDigitButton(9),
+              OperationButton(
+                operation: '×',
+                onPressed: () {
+                  calculateWithOperator('×');
+                },
               ),
             ],
-          )
+          ),
+          Row(
+            children: [
+              buildDigitButton(4),
+              buildDigitButton(5),
+              buildDigitButton(6),
+              OperationButton(
+                operation: '-',
+                onPressed: () {
+                  calculateWithOperator('-');
+                },
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              buildDigitButton(1),
+              buildDigitButton(2),
+              buildDigitButton(3),
+              OperationButton(
+                operation: '+',
+                onPressed: () {
+                  calculateWithOperator('+');
+                },
+              ),
+              // OperationButton('+'),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (displayText.isNotEmpty) {
+                      displayText =
+                          displayText.substring(0, displayText.length - 1);
+                      if (displayText.isEmpty) displayText = '0';
+                    }
+                    setState(() {});
+                  },
+                  child: Text('C'),
+                ),
+              ),
+              buildDigitButton(0),
+              DigitButton(
+                buttonText: '.',
+              ),
+              OperationButton(
+                operation: '=',
+                onPressed: () {
+                  if (operators.containsKey(currentOperator)) {
+                    var result =
+                        operators[currentOperator]!(firstNumber, secondNumber);
+                    print('결과: $result');
+
+                    if (result.toInt().toString().length > 8) {
+                      displayText = 'ERR';
+                    } else {
+                      setState(() {
+                        displayText = result.toString();
+                      });
+                      isFirstNumber = true;
+                      firstNumber = 0;
+                      secondNumber = 0;
+                      displaySecondNumber = '0';
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Expanded buildDigitButton(int number) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: () {
+          addNumber(number);
+        },
+        child: Text(
+          number.toString(),
+        ),
+      ),
+    );
+  }
+}
+
+class OperationButton extends StatelessWidget {
+  final String operation;
+  final Function()? onPressed;
+
+  const OperationButton({
+    required this.operation,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary),
+        child: Text(operation),
+      ),
+    );
+  }
+}
+
+class DigitButton extends StatelessWidget {
+  final String buttonText;
+  final Function()? onPressed;
+  const DigitButton({super.key, required this.buttonText, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        child: Text(buttonText),
       ),
     );
   }
