@@ -52,11 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
     displayText += number.toString();
 
     try {
-      if (isFirstNumber) {
-        updateFirstNumber();
-      } else {
-        updateSecondNumber(number);
-      }
+      isFirstNumber ? updateFirstNumber() : updateSecondNumber(number);
     } catch (e) {
       if (kDebugMode) {
         print('Error parsing number : $e');
@@ -84,6 +80,16 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  void resetCalculator() {
+    setState(() {
+      displayText = '0';
+      displaySecondNumber = '0';
+      isFirstNumber = true;
+      firstNumber = 0;
+      secondNumber = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
             alignment: Alignment.centerRight,
             child: Text(
               displayText,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 40.0,
               ),
             ),
@@ -213,6 +219,12 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Row buildButtonRow(List<Widget> buttons) {
+    return Row(
+      children: buttons,
     );
   }
 
