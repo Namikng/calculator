@@ -7,7 +7,6 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -38,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static const int maxDisplayLength = 8;
   late String currentOperator;
 
-  var operators = {
+  final operators = {
     '+': (num a, num b) => a + b,
     '-': (num a, num b) => a - b,
     '×': (num a, num b) => a * b,
@@ -108,72 +107,30 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Row(
-            children: [
-              DigitButton(
-                  buttonText: 'A/C',
-                  onPressed: () {
-                    setState(() {
-                      displayText = '0';
-                      displaySecondNumber = '0';
-                      isFirstNumber = true;
-                      firstNumber = 0;
-                      secondNumber = 0;
-                    });
-                  }),
-              DigitButton(
-                buttonText: '',
-              ),
-              DigitButton(
-                buttonText: '',
-              ),
-              OperationButton(
-                  operation: '÷',
-                  onPressed: () {
-                    calculateWithOperator('÷');
-                  }),
-            ],
-          ),
-          Row(
-            children: [
-              buildDigitButton(7),
-              buildDigitButton(8),
-              buildDigitButton(9),
-              OperationButton(
-                operation: '×',
-                onPressed: () {
-                  calculateWithOperator('×');
-                },
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              buildDigitButton(4),
-              buildDigitButton(5),
-              buildDigitButton(6),
-              OperationButton(
-                operation: '-',
-                onPressed: () {
-                  calculateWithOperator('-');
-                },
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              buildDigitButton(1),
-              buildDigitButton(2),
-              buildDigitButton(3),
-              OperationButton(
-                operation: '+',
-                onPressed: () {
-                  calculateWithOperator('+');
-                },
-              ),
-              // OperationButton('+'),
-            ],
-          ),
+          buildButtonRow([
+            createDigitButtonWithCallback('A/C', resetCalculator),
+            createDigitButtonWithCallback('', null),
+            createDigitButtonWithCallback('', null),
+            createOperationButton('÷', () => calculateWithOperator('÷'))
+          ]),
+          buildButtonRow([
+            createDigitButton(7),
+            createDigitButton(8),
+            createDigitButton(9),
+            createOperationButton('×', () => calculateWithOperator('×'))
+          ]),
+          buildButtonRow([
+            createDigitButton(4),
+            createDigitButton(5),
+            createDigitButton(6),
+            createOperationButton('-', () => calculateWithOperator('-'))
+          ]),
+          buildButtonRow([
+            createDigitButton(1),
+            createDigitButton(2),
+            createDigitButton(3),
+            createOperationButton('+', () => calculateWithOperator('+'))
+          ]),
           Row(
             children: [
               Expanded(
@@ -186,11 +143,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                     setState(() {});
                   },
-                  child: Text('C'),
+                  child: const Text('C'),
                 ),
               ),
               buildDigitButton(0),
-              DigitButton(
+              const DigitButton(
                 buttonText: '.',
               ),
               OperationButton(
@@ -237,6 +194,34 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Text(
           number.toString(),
         ),
+      ),
+    );
+  }
+
+  Expanded createDigitButton(int number) {
+    return createDigitButtonWithCallback(
+        number.toString(), () => addNumber(number));
+  }
+
+  Expanded createDigitButtonWithCallback(String text, VoidCallback? onPressed) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 20.0),
+        ),
+      ),
+    );
+  }
+
+  Expanded createOperationButton(String operation, VoidCallback? onPressed) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary),
+        child: Text(operation),
       ),
     );
   }
